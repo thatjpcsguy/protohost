@@ -1,0 +1,36 @@
+# Protohost Deploy Configuration Example
+# Copy this file to .protohost.config and customize for your project
+
+# Remote server configuration
+REMOTE_HOST="protohost.xyz"              # SSH hostname for deployment target
+REMOTE_USER="${USER}"                     # SSH username (defaults to current user)
+REMOTE_BASE_DIR="~/protohost"             # Base directory for all deployments
+
+# Network configuration
+# NGINX_PROXY_HOST: IP address where Docker containers are running
+# NGINX_SERVER: IP address where nginx is running (can be same or different)
+NGINX_PROXY_HOST="10.10.20.4"
+NGINX_SERVER="10.10.20.10"
+
+# Project configuration
+PROJECT_PREFIX="myapp"                    # Prefix for deployment names (creates myapp-<branch>)
+
+# Git repository
+REPO_URL="git@github.com:yourorg/yourrepo.git"
+
+# Deployment settings
+TTL_DAYS=7                                # Days until deployment auto-expires
+
+# Optional: Custom port ranges (uncomment to override defaults)
+# BASE_WEB_PORT=3000
+# BASE_MYSQL_PORT=3306
+# BASE_REDIS_PORT=6379
+
+# Optional: Additional service ports (uncomment if needed)
+# BASE_POSTGRES_PORT=5432
+# BASE_MONGODB_PORT=27017
+
+# Optional: Custom nginx SSL configuration (uncomment to override defaults)
+# SSL_CERT_PATH="/etc/letsencrypt/live/protohost.xyz/fullchain.pem"
+# SSL_KEY_PATH="/etc/letsencrypt/live/protohost.xyz/privkey.pem"
+# SSL_PARAMS_FILE="ssl-params.conf"
