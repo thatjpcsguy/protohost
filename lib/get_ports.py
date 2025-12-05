@@ -17,6 +17,36 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
+def get_saved_ports(project_name, base_dir):
+    """
+    Check if ports are saved in the .ports directory for this project.
+
+    Returns:
+        dict: {'WEB': port, 'MYSQL': port, 'REDIS': port} or None if not found
+    """
+    ports_file = os.path.join(os.path.expanduser(base_dir), '.ports', project_name)
+    if not os.path.exists(ports_file):
+        return None
+
+    try:
+        ports = {}
+        with open(ports_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('WEB_PORT='):
+                    ports['WEB'] = int(line.split('=')[1])
+                elif line.startswith('MYSQL_PORT='):
+                    ports['MYSQL'] = int(line.split('=')[1])
+                elif line.startswith('REDIS_PORT='):
+                    ports['REDIS'] = int(line.split('=')[1])
+
+        # Only return if we found all three ports
+        if 'WEB' in ports and 'MYSQL' in ports and 'REDIS' in ports:
+            return ports
+    except (IOError, ValueError):
+        pass
+    return None
+
 def get_running_ports(project_name):
     """
     Check if containers for this project are already running and return their ports.
@@ -103,15 +133,20 @@ def main():
 
     project_name = sys.argv[1]
 
-    # Read optional base ports from environment
+    # Read optional base ports and directory from environment
     base_web = int(os.environ.get('BASE_WEB_PORT', 3000))
     base_mysql = int(os.environ.get('BASE_MYSQL_PORT', 3306))
     base_redis = int(os.environ.get('BASE_REDIS_PORT', 6379))
+    base_dir = os.environ.get('REMOTE_BASE_DIR', '~/protohost')
 
-    # 1. Check if containers are already running
-    ports = get_running_ports(project_name)
+    # 1. Check if ports are saved in .ports directory
+    ports = get_saved_ports(project_name, base_dir)
 
-    # 2. If not running, find new slot
+    # 2. If not saved, check if containers are already running
+    if not ports:
+        ports = get_running_ports(project_name)
+
+    # 3. If not running, find new slot
     if not ports:
         ports = find_free_slot(base_web, base_mysql, base_redis)
 
