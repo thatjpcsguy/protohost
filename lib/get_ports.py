@@ -139,14 +139,14 @@ def main():
     base_redis = int(os.environ.get('BASE_REDIS_PORT', 6379))
     base_dir = os.environ.get('REMOTE_BASE_DIR', '~/protohost')
 
-    # 1. Check if ports are saved in .ports directory
-    ports = get_saved_ports(project_name, base_dir)
+    # 1. Check if containers are already running (most accurate source of truth)
+    ports = get_running_ports(project_name)
 
-    # 2. If not saved, check if containers are already running
+    # 2. If not running, check if ports are saved in .ports directory
     if not ports:
-        ports = get_running_ports(project_name)
+        ports = get_saved_ports(project_name, base_dir)
 
-    # 3. If not running, find new slot
+    # 3. If not saved, find new slot
     if not ports:
         ports = find_free_slot(base_web, base_mysql, base_redis)
 
