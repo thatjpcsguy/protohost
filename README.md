@@ -17,14 +17,14 @@ A drop-in deployment tool for managing multi-branch Docker Compose deployments t
 
 ```bash
 # From your project directory
-curl -sSL https://raw.githubusercontent.com/YOUR_ORG/protohost-deploy/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/thatjpcsguy/protohost/main/install.sh | bash
 ```
 
 Or clone and install manually:
 
 ```bash
 # Clone the repo
-git clone git@github.com:YOUR_ORG/protohost-deploy.git /tmp/protohost-deploy
+git clone git@github.com:thatjpcsguy/protohost.git /tmp/protohost-deploy
 
 # Install in your project
 cd /path/to/your/project
@@ -33,7 +33,14 @@ cd /path/to/your/project
 
 ### 2. Configure
 
-Edit `.protohost.config` in your project root:
+Copy the example config and customize it:
+
+```bash
+cp .protohost.config.example .protohost.config
+# Edit .protohost.config with your settings
+```
+
+Example configuration:
 
 ```bash
 REMOTE_HOST="protohost.xyz"
@@ -44,6 +51,11 @@ NGINX_SERVER="10.10.20.10"        # Host where nginx runs
 PROJECT_PREFIX="myapp"             # Creates myapp-<branch> deployments
 REPO_URL="git@github.com:org/repo.git"
 ```
+
+**Configuration files:**
+- `.protohost.config.example` - Template (committed to git)
+- `.protohost.config` - Your local config (gitignored)
+- `.protohost.config.local` - Optional local overrides (gitignored)
 
 ### 3. Ensure Docker Compose Supports Dynamic Ports
 
@@ -116,6 +128,12 @@ make nginx-list      # List all nginx configs
 
 ```bash
 make list-all        # List all running deployments
+```
+
+### Maintenance
+
+```bash
+make update-protohost  # Update protohost-deploy to latest version
 ```
 
 ## How It Works
@@ -210,6 +228,31 @@ On the remote server:
 | `REPO_URL` | Git repository URL | `git@github.com:org/repo.git` |
 | `TTL_DAYS` | Days until deployment expires | `7` |
 
+### Configuration Loading Order
+
+Configuration is loaded in this order (later values override earlier ones):
+
+1. `.protohost.config` - Main configuration
+2. `.protohost.config.local` - Local overrides (optional)
+
+**Example use case for `.protohost.config.local`:**
+
+```bash
+# .protohost.config (committed, shared by team)
+REMOTE_HOST="protohost.xyz"
+REMOTE_USER="deploy"
+PROJECT_PREFIX="myapp"
+
+# .protohost.config.local (gitignored, personal)
+REMOTE_HOST="dev.protohost.xyz"  # Use personal dev server
+REMOTE_USER="john"                # Use your SSH username
+```
+
+This allows team members to:
+- Share common configuration via `.protohost.config.example`
+- Keep personal settings in `.protohost.config` (gitignored)
+- Override specific values in `.protohost.config.local` without modifying the main config
+
 ### Optional Hooks
 
 Create these scripts in your project to customize behavior:
@@ -269,14 +312,23 @@ make nginx-disable PROJECT=myapp-old-branch
 
 ## Updating protohost-deploy
 
-To update to the latest version:
+To update to the latest version, use the built-in update command:
 
 ```bash
-# Re-run install script
-curl -sSL https://raw.githubusercontent.com/YOUR_ORG/protohost-deploy/main/install.sh | bash
+make update-protohost
 ```
 
-This will update symlinks to the latest version without changing your `.protohost.config`.
+This will:
+- Clone/update protohost-deploy to `/tmp/protohost-deploy`
+- Re-run the installer to update symlinks
+- Preserve your `.protohost.config` and `.protohost.config.local`
+- Update `.protohost/Makefile.inc` with new features
+
+**Alternative:** You can also run the install script directly:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/thatjpcsguy/protohost/main/install.sh | bash
+```
 
 ## Contributing
 

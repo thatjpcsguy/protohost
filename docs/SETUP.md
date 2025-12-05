@@ -129,13 +129,13 @@ From your project directory:
 cd /path/to/your/project
 
 # Clone protohost-deploy (or download)
-git clone git@github.com:YOUR_ORG/protohost-deploy.git /tmp/protohost-deploy
+git clone git@github.com:thatjpcsguy/protohost.git /tmp/protohost-deploy
 
 # Run installer
 /tmp/protohost-deploy/install.sh
 
 # Or use curl (once published)
-curl -sSL https://raw.githubusercontent.com/YOUR_ORG/protohost-deploy/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/thatjpcsguy/protohost/main/install.sh | bash
 ```
 
 ### 2. Configure Your Project
@@ -359,19 +359,26 @@ chmod 755 ~/protohost
 
 ## Updating Protohost Deploy
 
-To update to the latest version:
+To update to the latest version, simply run:
+
+```bash
+make update-protohost
+```
+
+This automated command will:
+- Clone/update the latest version to `/tmp/protohost-deploy`
+- Update symlinks to latest scripts
+- Preserve your `.protohost.config` and `.protohost.config.local`
+- Update `.protohost/Makefile.inc`
+
+**Manual update (alternative):**
 
 ```bash
 cd /tmp
-git clone git@github.com:YOUR_ORG/protohost-deploy.git
+git clone git@github.com:thatjpcsguy/protohost.git
 cd /path/to/your/project
 /tmp/protohost-deploy/install.sh
 ```
-
-This will:
-- Update symlinks to latest scripts
-- Preserve your `.protohost.config`
-- Update `.protohost/Makefile.inc`
 
 ## Uninstalling
 

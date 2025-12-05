@@ -12,6 +12,11 @@ fi
 
 source .protohost.config
 
+# Load local overrides if they exist
+if [ -f ".protohost.config.local" ]; then
+    source .protohost.config.local
+fi
+
 NGINX_DIR="${REMOTE_BASE_DIR}/.nginx"
 REMOTE_SITES_ENABLED="/etc/nginx/sites-enabled"
 

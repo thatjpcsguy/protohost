@@ -74,8 +74,8 @@ Impact: Benefits any project using PostgreSQL, which is a significant portion of
 
 1. **Fork the repository**
    ```bash
-   git clone git@github.com:YOUR_USERNAME/protohost-deploy.git
-   cd protohost-deploy
+   git clone git@github.com:YOUR_USERNAME/protohost.git
+   cd protohost
    ```
 
 2. **Create a feature branch**

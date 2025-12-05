@@ -13,6 +13,11 @@ fi
 
 source .protohost.config
 
+# Load local overrides if they exist
+if [ -f ".protohost.config.local" ]; then
+    source .protohost.config.local
+fi
+
 # Validate required config
 if [ -z "$REMOTE_HOST" ] || [ -z "$REMOTE_USER" ] || [ -z "$REMOTE_BASE_DIR" ] || [ -z "$PROJECT_PREFIX" ] || [ -z "$REPO_URL" ]; then
     echo "❌ Error: Missing required configuration in .protohost.config"

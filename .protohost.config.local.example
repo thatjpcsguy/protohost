@@ -1,0 +1,22 @@
+# Protohost Deploy Local Overrides Example
+# Copy this file to .protohost.config.local to override settings from .protohost.config
+# This file will NOT be committed to git (it's in .gitignore)
+
+# Use this for personal/machine-specific settings that differ from team defaults
+
+# Example: Override remote host for personal dev server
+# REMOTE_HOST="dev.protohost.xyz"
+
+# Example: Override SSH username
+# REMOTE_USER="your-username"
+
+# Example: Use different project prefix for testing
+# PROJECT_PREFIX="myapp-test"
+
+# Example: Override port ranges to avoid conflicts
+# BASE_WEB_PORT=4000
+# BASE_MYSQL_PORT=4306
+# BASE_REDIS_PORT=7379
+
+# Example: Use different TTL for personal deployments
+# TTL_DAYS=14

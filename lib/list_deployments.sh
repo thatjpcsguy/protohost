@@ -6,6 +6,11 @@
 # Load configuration
 if [ -f ".protohost.config" ]; then
     source .protohost.config
+
+    # Load local overrides if they exist
+    if [ -f ".protohost.config.local" ]; then
+        source .protohost.config.local
+    fi
 else
     # Fallback defaults if not in a project directory
     REMOTE_BASE_DIR="${REMOTE_BASE_DIR:-../protohost}"

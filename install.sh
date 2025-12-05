@@ -2,13 +2,21 @@
 set -e
 
 # Protohost Deploy - Installation Script
-# This script installs protohost-deploy into an existing project
+# This script sets up protohost-deploy in an existing project
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="${1:-.}"
+PROTOHOST_LIB="${HOME}/.local/share/protohost-deploy"
 
 echo "🚀 Installing protohost-deploy..."
 echo ""
+
+# Check if global installation exists
+if [ ! -d "$PROTOHOST_LIB" ]; then
+    echo "❌ Error: Protohost not installed globally"
+    echo "   Run './global-install.sh' first to install protohost system-wide"
+    exit 1
+fi
 
 # Ensure we're in a valid project directory
 if [ ! -d "$PROJECT_DIR" ]; then
@@ -20,6 +28,7 @@ cd "$PROJECT_DIR"
 PROJECT_DIR="$(pwd)"
 
 echo "📁 Project directory: $PROJECT_DIR"
+echo "📍 Using protohost from: $PROTOHOST_LIB"
 echo ""
 
 # Check for docker-compose.yml
@@ -34,14 +43,7 @@ fi
 
 # Create .protohost directory
 echo "📦 Creating .protohost directory..."
-mkdir -p .protohost/{bin,lib}
-
-# Create symlinks to protohost-deploy scripts
-echo "🔗 Creating symlinks to protohost-deploy..."
-ln -sf "$SCRIPT_DIR/lib/deploy.sh" .protohost/lib/deploy.sh
-ln -sf "$SCRIPT_DIR/lib/get_ports.py" .protohost/lib/get_ports.py
-ln -sf "$SCRIPT_DIR/lib/list_deployments.sh" .protohost/lib/list_deployments.sh
-ln -sf "$SCRIPT_DIR/lib/nginx_manage.sh" .protohost/lib/nginx_manage.sh
+mkdir -p .protohost
 
 # Create .protohost.config if it doesn't exist
 if [ ! -f ".protohost.config" ]; then
@@ -81,7 +83,7 @@ NGINX_SERVER="10.10.20.10"
 PROJECT_PREFIX="$PROJECT_NAME"
 
 # Git repository
-REPO_URL="${DETECTED_REPO_URL:-git@github.com:YOUR_ORG/YOUR_REPO.git}"
+REPO_URL="${DETECTED_REPO_URL:-git@github.com:thatjpcsguy/protohost.git}"
 
 # Deployment settings
 TTL_DAYS=7  # Days until deployment auto-expires
@@ -108,8 +110,8 @@ fi
 
 # Add protohost targets to Makefile or create one
 if [ -f "Makefile" ]; then
-    # Check if protohost targets already exist
-    if grep -q "# PROTOHOST-DEPLOY-TARGETS" Makefile; then
+    # Check if protohost targets already exist (check for actual include statement)
+    if grep -q "include .protohost/Makefile.inc" Makefile; then
         echo "✓ Makefile already has protohost targets"
     else
         echo "📝 Adding protohost targets to existing Makefile..."
@@ -127,151 +129,37 @@ else
     echo "✓ Created Makefile"
 fi
 
-# Create the Makefile.inc that will be included
-echo "📝 Creating .protohost/Makefile.inc..."
-cat > .protohost/Makefile.inc <<'EOF'
-# Protohost Deploy - Makefile Include
-# This file is auto-generated - do not edit manually
-
-# Load configuration
-include .protohost.config
-
-# Detect current branch
-BRANCH := $(shell git branch --show-current 2>/dev/null || echo "main")
-PROJECT_NAME := $(PROJECT_PREFIX)-$(BRANCH)
-
-# Get dynamic ports from script
-PORTS := $(shell python3 .protohost/lib/get_ports.py $(PROJECT_NAME))
-WEB_PORT := $(word 1, $(PORTS))
-MYSQL_PORT := $(word 2, $(PORTS))
-REDIS_PORT := $(word 3, $(PORTS))
-
-.PHONY: up down logs info restart list-all nginx-config nginx-enable nginx-disable nginx-list deploy
-
-up:
-	@echo "Starting environment for project '$(PROJECT_NAME)'"
-	@echo "  Web: http://localhost:$(WEB_PORT)"
-	@echo "  MySQL: $(MYSQL_PORT)"
-	@echo "  Redis: $(REDIS_PORT)"
-	WEB_PORT=$(WEB_PORT) MYSQL_PORT=$(MYSQL_PORT) REDIS_PORT=$(REDIS_PORT) docker compose -p $(PROJECT_NAME) up -d --wait
-	@mkdir -p $(REMOTE_BASE_DIR)/.ports
-	@echo "WEB_PORT=$(WEB_PORT)" > $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@echo "MYSQL_PORT=$(MYSQL_PORT)" >> $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@echo "REDIS_PORT=$(REDIS_PORT)" >> $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@echo "BRANCH=$(BRANCH)" >> $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@echo "CREATED=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@echo "EXPIRES=$$(date -u -d '+$(TTL_DAYS) days' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+$(TTL_DAYS)d +%Y-%m-%dT%H:%M:%SZ)" >> $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-
-down:
-	docker compose -p $(PROJECT_NAME) down
-	@rm -f $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME)
-	@rm -f $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf
-
-restart:
-	WEB_PORT=$(WEB_PORT) MYSQL_PORT=$(MYSQL_PORT) REDIS_PORT=$(REDIS_PORT) docker compose -p $(PROJECT_NAME) restart
-
-logs:
-	docker compose -p $(PROJECT_NAME) logs -f
-
-info:
-	@echo "Environment Info:"
-	@echo "  Branch:  $(BRANCH)"
-	@echo "  Project: $(PROJECT_NAME)"
-	@if [ -f $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME) ]; then \
-		. $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME) && \
-		echo "  Web:     http://localhost:$$WEB_PORT" && \
-		echo "  MySQL:   $$MYSQL_PORT" && \
-		echo "  Redis:   $$REDIS_PORT"; \
-	else \
-		echo "  Web:     http://localhost:$(WEB_PORT)"; \
-		echo "  MySQL:   $(MYSQL_PORT)"; \
-		echo "  Redis:   $(REDIS_PORT)"; \
-	fi
-
-list-all:
-	@./.protohost/lib/list_deployments.sh
-
-nginx-config:
-	@mkdir -p $(REMOTE_BASE_DIR)/.nginx
-	@echo "Generating nginx config for $(PROJECT_NAME)..."
-	@if [ ! -f $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME) ]; then \
-		echo "❌ Error: Deployment not running. Run 'make up' first."; \
-		exit 1; \
-	fi
-	@. $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME) && \
-	echo "Using port: $$WEB_PORT" && \
-	echo "server {" > $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf
-	@. $(REMOTE_BASE_DIR)/.ports/$(PROJECT_NAME) && \
-	echo "    listen 443 ssl;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    server_name $(PROJECT_NAME).$(REMOTE_HOST);" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    ssl_certificate /etc/letsencrypt/live/$(REMOTE_HOST)/fullchain.pem;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    ssl_certificate_key /etc/letsencrypt/live/$(REMOTE_HOST)/privkey.pem;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    include ssl-params.conf;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    location / {" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_pass http://$(NGINX_PROXY_HOST):$$WEB_PORT;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_http_version 1.1;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header Upgrade \$$http_upgrade;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header Connection \"upgrade\";" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header Host \$$host;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header X-Real-IP \$$remote_addr;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_set_header X-Forwarded-Proto \$$scheme;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_read_timeout 86400;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "        proxy_buffering off;" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "    }" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "}" >> $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf && \
-	echo "Nginx config written to $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf" && \
-	echo "  URL: https://$(PROJECT_NAME).$(REMOTE_HOST)" && \
-	echo "  Port: $$WEB_PORT" && \
-	echo "Deploying to nginx server..." && \
-	scp $(REMOTE_BASE_DIR)/.nginx/$(PROJECT_NAME).conf $(NGINX_SERVER):/tmp/protohost-$(PROJECT_NAME).conf && \
-	ssh $(NGINX_SERVER) "sudo mv /tmp/protohost-$(PROJECT_NAME).conf /etc/nginx/sites-enabled/protohost-$(PROJECT_NAME).conf && sudo service nginx restart" && \
-	echo "✓ Nginx config deployed and nginx restarted"
-
-nginx-enable:
-	@./.protohost/lib/nginx_manage.sh enable $(PROJECT_NAME)
-
-nginx-disable:
-	@./.protohost/lib/nginx_manage.sh disable $(PROJECT_NAME)
-
-nginx-list:
-	@./.protohost/lib/nginx_manage.sh list
-
-deploy:
-	@echo "Deploying to $(or $(HOST),$(REMOTE_HOST))..."
-	@./.protohost/lib/deploy.sh $(if $(RESET_DB),--reset-db) $(if $(NUKE),--nuke) $(if $(HOST),--host $(HOST))
-EOF
-
+# Copy Makefile.inc from global installation
+echo "📄 Copying Makefile.inc from global installation..."
+cp "$PROTOHOST_LIB/templates/Makefile.inc" .protohost/Makefile.inc
 echo "✓ Created .protohost/Makefile.inc"
 
-# Add .protohost to .gitignore if not already there
+# Add .protohost.config.local to .gitignore
 if [ -f ".gitignore" ]; then
-    if ! grep -q "^\.protohost/" .gitignore; then
-        echo "📝 Adding .protohost/ to .gitignore..."
+    if ! grep -q "^\.protohost\.config\.local$" .gitignore; then
+        echo "📝 Adding .protohost.config.local to .gitignore..."
         echo "" >> .gitignore
-        echo "# Protohost deploy (keep config, ignore cached scripts)" >> .gitignore
-        echo ".protohost/" >> .gitignore
+        echo "# Protohost deploy - only ignore local overrides" >> .gitignore
+        echo ".protohost.config.local" >> .gitignore
         echo "✓ Updated .gitignore"
     else
-        echo "✓ .gitignore already has .protohost/"
+        echo "✓ .gitignore already configured for protohost"
     fi
 else
     echo "📝 Creating .gitignore..."
     cat > .gitignore <<EOF
-# Protohost deploy (keep config, ignore cached scripts)
-.protohost/
+# Protohost deploy - only ignore local overrides
+.protohost.config.local
 EOF
     echo "✓ Created .gitignore"
 fi
 
-# Check if .protohost.config should be in .gitignore
+# Show configuration pattern
 echo ""
-echo "⚠️  Important: .protohost.config contains project-specific settings."
-echo "   You may want to:"
-echo "   1. Commit it if settings are the same for all developers"
-echo "   2. Add to .gitignore and create .protohost.config.example for reference"
+echo "💡 Configuration pattern:"
+echo "   .protohost.config         - Project config (commit this)"
+echo "   .protohost.config.local   - Local overrides (gitignored)"
+echo "   .protohost/Makefile.inc   - Generated file (commit this)"
 echo ""
 
 # Create hooks directory

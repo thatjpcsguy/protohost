@@ -16,7 +16,7 @@ NGINX_SERVER="10.10.20.10"
 PROJECT_PREFIX="myapp"                    # Prefix for deployment names (creates myapp-<branch>)
 
 # Git repository
-REPO_URL="git@github.com:yourorg/yourrepo.git"
+REPO_URL="git@github.com:thatjpcsguy/protohost.git"
 
 # Deployment settings
 TTL_DAYS=7                                # Days until deployment auto-expires
