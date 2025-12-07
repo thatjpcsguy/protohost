@@ -62,3 +62,12 @@ $RECYCLE.BIN/
 # Local configuration (use .protohost.config.example as template)
 .protohost.config
 .protohost.config.local
+
+# Go build artifacts
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+protohost
