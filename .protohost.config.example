@@ -34,3 +34,16 @@ TTL_DAYS=7                                # Days until deployment auto-expires
 # SSL_CERT_PATH="/etc/letsencrypt/live/protohost.xyz/fullchain.pem"
 # SSL_KEY_PATH="/etc/letsencrypt/live/protohost.xyz/privkey.pem"
 # SSL_PARAMS_FILE="ssl-params.conf"
+
+# Optional: Custom scripts (executed during deployment)
+# These run if corresponding hook files don't exist in .protohost/hooks/
+# Note: Scripts run in bash -c, so use proper quoting for complex commands
+
+# PRE_DEPLOY_SCRIPT=""                              # Runs locally before deployment starts
+# POST_DEPLOY_SCRIPT=""                             # Runs locally after deployment completes
+
+# POST_START_SCRIPT=""                              # Runs on remote after containers start (every deploy)
+# Example: POST_START_SCRIPT="docker compose -p \$PROJECT_NAME exec web python manage.py migrate"
+
+# FIRST_INSTALL_SCRIPT=""                           # Runs on remote only on first deployment of a branch
+# Example: FIRST_INSTALL_SCRIPT="docker compose -p \$PROJECT_NAME exec web python scripts/seed_data.py"
