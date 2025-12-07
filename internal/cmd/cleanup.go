@@ -44,7 +44,7 @@ func cleanupLocal(dryRun bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to open registry: %w", err)
 	}
-	defer reg.Close()
+	defer func() { _ = reg.Close() }()
 
 	// Mark expired deployments
 	expired, err := reg.MarkExpired()
@@ -120,7 +120,7 @@ func cleanupRemote(dryRun bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	dryRunFlag := ""
 	if dryRun {

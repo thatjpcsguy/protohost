@@ -56,7 +56,7 @@ func Local(opts LocalOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to open registry: %w", err)
 	}
-	defer reg.Close()
+	defer func() { _ = reg.Close() }()
 
 	// Allocate port
 	port, err := reg.AllocatePort(projectName, branch, cfg.RepoURL, cfg.TTLDays, cfg.BaseWebPort)

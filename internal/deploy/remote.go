@@ -58,7 +58,7 @@ func Remote(opts RemoteOptions) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Check if protohost is installed on remote
 	installed, err := client.CheckProtohostInstalled()
@@ -73,7 +73,7 @@ func Remote(opts RemoteOptions) error {
 				return fmt.Errorf("failed to bootstrap remote: %w", err)
 			}
 		} else {
-			return fmt.Errorf(`protohost not found on remote server
+			msg := fmt.Sprintf(`protohost not found on remote server
 
 Please install protohost on the remote server first:
 
@@ -84,8 +84,8 @@ Please install protohost on the remote server first:
     protohost deploy --remote --auto-bootstrap
 
   Option 3: Install manually on remote
-    ssh %s@%s "curl -sSL https://raw.githubusercontent.com/thatjpcsguy/protohost/main/install.sh | bash"
-`, cfg.RemoteUser, cfg.RemoteHost)
+    ssh %s@%s "curl -sSL https://raw.githubusercontent.com/thatjpcsguy/protohost/main/install.sh | bash"`, cfg.RemoteUser, cfg.RemoteHost)
+			return fmt.Errorf("%s", msg)
 		}
 	}
 
@@ -130,7 +130,7 @@ func buildRemoteDeployScript(cfg *config.Config, projectName, branch string, opt
 	script.WriteString("else\n")
 	script.WriteString(fmt.Sprintf("    echo '🔄 Updating repository (branch: %s)...'\n", branch))
 	script.WriteString(fmt.Sprintf("    cd %s\n", projectName))
-	script.WriteString(fmt.Sprintf("    git fetch origin\n"))
+	script.WriteString("    git fetch origin\n")
 	script.WriteString(fmt.Sprintf("    git reset --hard origin/%s\n", branch))
 	script.WriteString(fmt.Sprintf("    git pull origin %s\n", branch))
 	script.WriteString(fmt.Sprintf("    cd %s\n", cfg.RemoteBaseDir))
@@ -148,7 +148,7 @@ func buildRemoteDeployScript(cfg *config.Config, projectName, branch string, opt
 		deployCmd += " --build"
 	}
 
-	script.WriteString(fmt.Sprintf("# Run protohost deploy\n"))
+	script.WriteString("# Run protohost deploy\n")
 	script.WriteString(fmt.Sprintf("%s\n", deployCmd))
 
 	return script.String()
@@ -200,7 +200,7 @@ func BootstrapRemote() error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Check if already installed
 	installed, err := client.CheckProtohostInstalled()

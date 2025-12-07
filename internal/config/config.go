@@ -78,7 +78,7 @@ func loadConfigFile(filename string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Regex to match KEY="value" or KEY=value
 	re := regexp.MustCompile(`^([A-Z_]+)=(.*)$`)
@@ -107,7 +107,7 @@ func loadConfigFile(filename string, cfg *Config) error {
 		case "REPO_URL":
 			cfg.RepoURL = value
 		case "TTL_DAYS":
-			fmt.Sscanf(value, "%d", &cfg.TTLDays)
+			_, _ = fmt.Sscanf(value, "%d", &cfg.TTLDays)
 		case "REMOTE_HOST":
 			cfg.RemoteHost = value
 		case "REMOTE_USER":
@@ -119,7 +119,7 @@ func loadConfigFile(filename string, cfg *Config) error {
 		case "NGINX_SERVER":
 			cfg.NginxServer = value
 		case "BASE_WEB_PORT":
-			fmt.Sscanf(value, "%d", &cfg.BaseWebPort)
+			_, _ = fmt.Sscanf(value, "%d", &cfg.BaseWebPort)
 		case "SSL_CERT_PATH":
 			cfg.SSLCertPath = value
 		case "SSL_KEY_PATH":

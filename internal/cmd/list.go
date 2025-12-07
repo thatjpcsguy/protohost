@@ -37,7 +37,7 @@ func listLocal() error {
 	if err != nil {
 		return fmt.Errorf("failed to open registry: %w", err)
 	}
-	defer reg.Close()
+	defer func() { _ = reg.Close() }()
 
 	allocations, err := reg.ListAllocations()
 	if err != nil {
@@ -102,7 +102,7 @@ func listRemote() error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// Run protohost list on remote
 	if err := client.ExecuteInteractive("cd " + cfg.RemoteBaseDir + " && protohost list"); err != nil {

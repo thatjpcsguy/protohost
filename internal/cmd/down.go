@@ -74,7 +74,7 @@ func downLocal(projectName string, removeVolumes bool) error {
 	if err != nil {
 		fmt.Printf("Warning: failed to update registry: %v\n", err)
 	} else {
-		defer reg.Close()
+		defer func() { _ = reg.Close() }()
 		if err := reg.UpdateStatus(projectName, "stopped"); err != nil {
 			fmt.Printf("Warning: failed to update status: %v\n", err)
 		}
@@ -89,7 +89,7 @@ func downRemote(cfg *config.Config, projectName string, removeVolumes bool) erro
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	volumeFlag := ""
 	if removeVolumes {

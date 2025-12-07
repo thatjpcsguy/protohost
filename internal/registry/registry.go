@@ -41,7 +41,7 @@ func New() (*Registry, error) {
 
 	// Initialize schema
 	if err := r.initSchema(); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (r *Registry) findAvailablePort(basePort int) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to query ports: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	usedPorts := make(map[int]bool)
 	for rows.Next() {
@@ -168,7 +168,7 @@ func (r *Registry) isPortAvailable(port int) bool {
 	if err != nil {
 		return false
 	}
-	listener.Close()
+	_ = listener.Close()
 	return true
 }
 
@@ -203,7 +203,7 @@ func (r *Registry) ListAllocations() ([]PortAllocation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query allocations: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var allocations []PortAllocation
 	for rows.Next() {
@@ -241,7 +241,7 @@ func (r *Registry) MarkExpired() ([]PortAllocation, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query expired: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var expired []PortAllocation
 	for rows.Next() {

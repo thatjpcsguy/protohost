@@ -70,7 +70,7 @@ func logsRemote(cfg *config.Config, projectName string, follow bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	followFlag := ""
 	if follow {

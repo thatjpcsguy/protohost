@@ -136,7 +136,7 @@ func writeEnvFile(dir string, env map[string]string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create .env file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Write sorted vars
 	for k, v := range existingVars {

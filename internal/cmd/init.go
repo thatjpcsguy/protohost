@@ -27,8 +27,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Println("⚠️  .protohost.config already exists")
 		fmt.Print("Overwrite? (y/N): ")
 		var response string
-		fmt.Scanln(&response)
-		if !strings.HasPrefix(strings.ToLower(response), "y") {
+		if _, err := fmt.Scanln(&response); err != nil || !strings.HasPrefix(strings.ToLower(response), "y") {
 			fmt.Println("Aborted")
 			return nil
 		}

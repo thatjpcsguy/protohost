@@ -49,7 +49,7 @@ func infoLocal(projectName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open registry: %w", err)
 	}
-	defer reg.Close()
+	defer func() { _ = reg.Close() }()
 
 	alloc, err := reg.GetAllocation(projectName)
 	if err != nil {
@@ -72,7 +72,7 @@ func infoRemote(cfg *config.Config, projectName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	cmd := fmt.Sprintf("cd %s/%s && protohost info", cfg.RemoteBaseDir, projectName)
 	return client.ExecuteInteractive(cmd)

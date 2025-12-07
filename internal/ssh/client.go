@@ -3,7 +3,6 @@ package ssh
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,7 +86,7 @@ func (c *Client) Execute(command string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create session: %w", err)
 	}
-	defer session.Close()
+	defer func() { _ = session.Close() }()
 
 	var stdout bytes.Buffer
 	session.Stdout = &stdout
@@ -105,7 +104,7 @@ func (c *Client) ExecuteInteractive(command string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
-	defer session.Close()
+	defer func() { _ = session.Close() }()
 
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
@@ -130,7 +129,7 @@ func (c *Client) SCP(localPath, remotePath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
-	defer session.Close()
+	defer func() { _ = session.Close() }()
 
 	// Use cat to write file
 	stdin, err := session.StdinPipe()
@@ -139,8 +138,8 @@ func (c *Client) SCP(localPath, remotePath string) error {
 	}
 
 	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, string(content))
+		defer func() { _ = stdin.Close() }()
+		_, _ = stdin.Write(content)
 	}()
 
 	if err := session.Run(fmt.Sprintf("cat > %s", remotePath)); err != nil {
