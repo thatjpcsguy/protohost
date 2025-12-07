@@ -8,7 +8,7 @@ import (
 	"github.com/thatjpcsguy/protohost/internal/cmd"
 )
 
-var version = "0.1.2"
+var version = "0.1.3"
 
 func main() {
 	rootCmd := &cobra.Command{
