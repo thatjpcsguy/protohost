@@ -70,4 +70,4 @@ dist/
 *.dll
 *.so
 *.dylib
-protohost
+/protohost
