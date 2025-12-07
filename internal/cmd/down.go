@@ -56,13 +56,23 @@ func NewDownCmd() *cobra.Command {
 }
 
 func downLocal(projectName string, removeVolumes bool) error {
-	// Get deployment directory
-	home, err := getUserHomeDir()
-	if err != nil {
-		return err
+	// Determine deployment directory (same logic as deploy)
+	var deployDir string
+	if git.IsGitRepo() {
+		// Use current directory if in a git repo
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+		deployDir = cwd
+	} else {
+		// Otherwise use deployments directory
+		home, err := getUserHomeDir()
+		if err != nil {
+			return err
+		}
+		deployDir = fmt.Sprintf("%s/.protohost/deployments/%s", home, projectName)
 	}
-
-	deployDir := fmt.Sprintf("%s/.protohost/deployments/%s", home, projectName)
 
 	// Stop containers
 	if err := docker.Down(projectName, deployDir, removeVolumes); err != nil {
