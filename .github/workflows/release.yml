@@ -68,7 +68,7 @@ jobs:
           shasum -a 256 "${OUTPUT_NAME}.tar.gz" > "${OUTPUT_NAME}.tar.gz.sha256"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: protohost-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
