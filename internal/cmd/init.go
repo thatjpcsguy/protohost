@@ -131,8 +131,8 @@ REPO_URL="%s"
 TTL_DAYS=7
 
 # Remote server configuration
-REMOTE_HOST="protohost.xyz"
-REMOTE_USER="${USER}"
+REMOTE_HOST="remote.protohost.xyz"
+REMOTE_USER="james"
 REMOTE_BASE_DIR="~/protohost"
 
 # Network configuration
