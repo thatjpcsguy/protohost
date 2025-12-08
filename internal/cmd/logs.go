@@ -14,6 +14,7 @@ import (
 func NewLogsCmd() *cobra.Command {
 	var (
 		remote bool
+		local  bool
 		follow bool
 		branch string
 	)
@@ -21,7 +22,7 @@ func NewLogsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "logs",
 		Short: "View logs for deployment",
-		Long:  `Views logs for the current branch deployment.`,
+		Long:  `Views remote logs by default. Use --local to view local logs.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -38,15 +39,17 @@ func NewLogsCmd() *cobra.Command {
 
 			projectName := fmt.Sprintf("%s-%s", cfg.ProjectPrefix, branch)
 
-			if remote {
-				return logsRemote(cfg, projectName, follow)
+			// Default to remote unless --local is specified
+			if local {
+				return logsLocal(projectName, follow)
 			}
 
-			return logsLocal(projectName, follow)
+			return logsRemote(cfg, projectName, follow)
 		},
 	}
 
-	cmd.Flags().BoolVar(&remote, "remote", false, "View remote logs")
+	cmd.Flags().BoolVar(&remote, "remote", false, "View remote logs (default, kept for backwards compatibility)")
+	cmd.Flags().BoolVar(&local, "local", false, "View local logs instead of remote")
 	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow log output")
 	cmd.Flags().StringVar(&branch, "branch", "", "Branch name (defaults to current)")
 

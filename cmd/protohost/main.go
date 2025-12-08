@@ -8,7 +8,7 @@ import (
 	"github.com/thatjpcsguy/protohost/internal/cmd"
 )
 
-var version = "0.1.10"
+var version = "0.1.11"
 
 func main() {
 	rootCmd := &cobra.Command{
@@ -28,6 +28,7 @@ applications with automatic port allocation and nginx configuration.`,
 	rootCmd.AddCommand(cmd.NewInfoCmd())
 	rootCmd.AddCommand(cmd.NewCleanupCmd())
 	rootCmd.AddCommand(cmd.NewBootstrapRemoteCmd())
+	rootCmd.AddCommand(cmd.NewHooksCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

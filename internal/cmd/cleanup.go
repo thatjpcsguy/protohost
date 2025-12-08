@@ -18,22 +18,25 @@ import (
 func NewCleanupCmd() *cobra.Command {
 	var (
 		remote bool
+		local  bool
 		dryRun bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "cleanup",
 		Short: "Remove expired deployments",
-		Long:  `Removes deployments that have passed their TTL.`,
+		Long:  `Removes remote expired deployments by default. Use --local to cleanup local deployments.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if remote {
-				return cleanupRemote(dryRun)
+			// Default to remote unless --local is specified
+			if local {
+				return cleanupLocal(dryRun)
 			}
-			return cleanupLocal(dryRun)
+			return cleanupRemote(dryRun)
 		},
 	}
 
-	cmd.Flags().BoolVar(&remote, "remote", false, "Cleanup remote deployments")
+	cmd.Flags().BoolVar(&remote, "remote", false, "Cleanup remote deployments (default, kept for backwards compatibility)")
+	cmd.Flags().BoolVar(&local, "local", false, "Cleanup local deployments instead of remote")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be removed")
 
 	return cmd

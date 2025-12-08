@@ -13,11 +13,12 @@ import (
 // NewInfoCmd creates the info command
 func NewInfoCmd() *cobra.Command {
 	var remote bool
+	var local bool
 
 	cmd := &cobra.Command{
 		Use:   "info",
 		Short: "Show deployment info",
-		Long:  `Shows information about the current branch deployment.`,
+		Long:  `Shows remote deployment info by default. Use --local to show local deployment info.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -31,15 +32,17 @@ func NewInfoCmd() *cobra.Command {
 
 			projectName := fmt.Sprintf("%s-%s", cfg.ProjectPrefix, branch)
 
-			if remote {
-				return infoRemote(cfg, projectName)
+			// Default to remote unless --local is specified
+			if local {
+				return infoLocal(projectName)
 			}
 
-			return infoLocal(projectName)
+			return infoRemote(cfg, projectName)
 		},
 	}
 
-	cmd.Flags().BoolVar(&remote, "remote", false, "Show remote deployment info")
+	cmd.Flags().BoolVar(&remote, "remote", false, "Show remote deployment info (default, kept for backwards compatibility)")
+	cmd.Flags().BoolVar(&local, "local", false, "Show local deployment info instead of remote")
 
 	return cmd
 }

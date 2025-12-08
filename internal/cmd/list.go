@@ -14,20 +14,23 @@ import (
 // NewListCmd creates the list command
 func NewListCmd() *cobra.Command {
 	var remote bool
+	var local bool
 
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all deployments",
-		Long:  `Lists all deployments with their status and connection details.`,
+		Long:  `Lists remote deployments by default. Use --local to list local deployments.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if remote {
-				return listRemote()
+			// Default to remote unless --local is specified
+			if local {
+				return listLocal()
 			}
-			return listLocal()
+			return listRemote()
 		},
 	}
 
-	cmd.Flags().BoolVar(&remote, "remote", false, "List remote deployments")
+	cmd.Flags().BoolVar(&remote, "remote", false, "List remote deployments (default, kept for backwards compatibility)")
+	cmd.Flags().BoolVar(&local, "local", false, "List local deployments instead of remote")
 
 	return cmd
 }

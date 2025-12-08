@@ -17,6 +17,7 @@ import (
 func NewDownCmd() *cobra.Command {
 	var (
 		remote        bool
+		local         bool
 		removeVolumes bool
 		branch        string
 	)
@@ -24,7 +25,7 @@ func NewDownCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "down",
 		Short: "Stop deployment",
-		Long:  `Stops the deployment for the current branch.`,
+		Long:  `Stops the remote deployment by default. Use --local to stop local deployment.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
@@ -41,15 +42,17 @@ func NewDownCmd() *cobra.Command {
 
 			projectName := fmt.Sprintf("%s-%s", cfg.ProjectPrefix, branch)
 
-			if remote {
-				return downRemote(cfg, projectName, removeVolumes)
+			// Default to remote unless --local is specified
+			if local {
+				return downLocal(projectName, removeVolumes)
 			}
 
-			return downLocal(projectName, removeVolumes)
+			return downRemote(cfg, projectName, removeVolumes)
 		},
 	}
 
-	cmd.Flags().BoolVar(&remote, "remote", false, "Stop remote deployment")
+	cmd.Flags().BoolVar(&remote, "remote", false, "Stop remote deployment (default, kept for backwards compatibility)")
+	cmd.Flags().BoolVar(&local, "local", false, "Stop local deployment instead of remote")
 	cmd.Flags().BoolVarP(&removeVolumes, "remove-volumes", "v", false, "Remove volumes")
 	cmd.Flags().StringVar(&branch, "branch", "", "Branch name (defaults to current)")
 
