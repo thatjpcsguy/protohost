@@ -54,7 +54,7 @@ func Remote(opts RemoteOptions) error {
 
 	// Connect to remote
 	fmt.Printf("🔌 Connecting to %s@%s...\n", cfg.RemoteUser, cfg.RemoteHost)
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
@@ -196,7 +196,7 @@ func BootstrapRemote() error {
 	fmt.Printf("🚀 Installing protohost on %s@%s...\n", cfg.RemoteUser, cfg.RemoteHost)
 
 	// Connect to remote
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}

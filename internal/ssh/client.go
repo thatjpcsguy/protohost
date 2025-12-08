@@ -22,20 +22,33 @@ type Client struct {
 }
 
 // NewClient creates a new SSH client
-func NewClient(user, host string) (*Client, error) {
+func NewClient(user, host, configKeyPath string) (*Client, error) {
 	// Get SSH key path
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	keyPath := filepath.Join(home, ".ssh", "id_rsa")
-	key, err := os.ReadFile(keyPath)
-	if err != nil {
-		keyPath = filepath.Join(home, ".ssh", "id_ed25519")
+	var keyPath string
+	var key []byte
+
+	// If a specific key path is configured, try that first
+	if configKeyPath != "" {
+		keyPath = configKeyPath
 		key, err = os.ReadFile(keyPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read SSH key: %w", err)
+			return nil, fmt.Errorf("failed to read configured SSH key at %s: %w", keyPath, err)
+		}
+	} else {
+		// Fall back to default key paths
+		keyPath = filepath.Join(home, ".ssh", "id_rsa")
+		key, err = os.ReadFile(keyPath)
+		if err != nil {
+			keyPath = filepath.Join(home, ".ssh", "id_ed25519")
+			key, err = os.ReadFile(keyPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read SSH key: %w", err)
+			}
 		}
 	}
 

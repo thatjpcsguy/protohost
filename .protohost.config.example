@@ -6,6 +6,9 @@ REMOTE_HOST="remote.protohost.xyz"              # SSH hostname for deployment ta
 REMOTE_USER="james"                     # SSH username (defaults to current user)
 REMOTE_BASE_DIR="~/protohost"             # Base directory for all deployments
 
+# Optional: Custom SSH key path (defaults to ~/.ssh/id_rsa or ~/.ssh/id_ed25519)
+# SSH_KEY_PATH="~/.ssh/custom_key"
+
 # Network configuration
 # NGINX_PROXY_HOST: IP address where Docker containers are running
 # NGINX_SERVER: IP address where nginx is running (can be same or different)

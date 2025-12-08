@@ -119,7 +119,7 @@ func cleanupRemote(dryRun bool) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}

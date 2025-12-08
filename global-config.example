@@ -1,0 +1,17 @@
+# Protohost Global Configuration Example
+# Copy this file to ~/.protohost/config to set machine-wide defaults
+# These settings apply to all projects but can be overridden per-project
+
+# SSH Configuration
+# Specify a custom SSH key to use for all remote connections
+# This is useful if you use a non-standard key or have multiple keys
+SSH_KEY_PATH="~/.ssh/id_rsa"
+
+# You can also set other defaults here that apply across all projects
+# For example, if you always use the same remote user:
+# REMOTE_USER="your-username"
+
+# Or if you have a standard deployment directory:
+# REMOTE_BASE_DIR="~/protohost"
+
+# Note: Per-project settings in .protohost.config will override these global settings

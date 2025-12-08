@@ -10,6 +10,9 @@
 # Example: Override SSH username
 # REMOTE_USER="your-username"
 
+# Example: Use custom SSH key
+# SSH_KEY_PATH="~/.ssh/custom_key"
+
 # Example: Use different project prefix for testing
 # PROJECT_PREFIX="myapp-test"
 

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -24,6 +25,9 @@ type Config struct {
 
 	// Port settings
 	BaseWebPort int
+
+	// SSH settings
+	SSHKeyPath string
 
 	// SSL settings
 	SSLCertPath   string
@@ -46,12 +50,23 @@ func Load() (*Config, error) {
 		SSLParamsFile: "ssl-params.conf",
 	}
 
+	// Load global config first (lowest priority)
+	home, err := os.UserHomeDir()
+	if err == nil {
+		globalConfigPath := filepath.Join(home, ".protohost", "config")
+		if _, err := os.Stat(globalConfigPath); err == nil {
+			if err := loadConfigFile(globalConfigPath, cfg); err != nil {
+				return nil, fmt.Errorf("failed to load global config: %w", err)
+			}
+		}
+	}
+
 	// Load main config
 	if err := loadConfigFile(".protohost.config", cfg); err != nil {
 		return nil, fmt.Errorf("failed to load .protohost.config: %w", err)
 	}
 
-	// Load local overrides if they exist
+	// Load local overrides if they exist (highest priority)
 	if _, err := os.Stat(".protohost.config.local"); err == nil {
 		if err := loadConfigFile(".protohost.config.local", cfg); err != nil {
 			return nil, fmt.Errorf("failed to load .protohost.config.local: %w", err)
@@ -119,6 +134,8 @@ func loadConfigFile(filename string, cfg *Config) error {
 			cfg.NginxServer = value
 		case "BASE_WEB_PORT":
 			_, _ = fmt.Sscanf(value, "%d", &cfg.BaseWebPort)
+		case "SSH_KEY_PATH":
+			cfg.SSHKeyPath = value
 		case "SSL_CERT_PATH":
 			cfg.SSLCertPath = value
 		case "SSL_KEY_PATH":
@@ -144,6 +161,15 @@ func (c *Config) expandVariables() error {
 	// Expand ${USER} in RemoteUser
 	if c.RemoteUser == "${USER}" || c.RemoteUser == "$USER" {
 		c.RemoteUser = os.Getenv("USER")
+	}
+
+	// Expand ~ in SSHKeyPath (local path)
+	if strings.HasPrefix(c.SSHKeyPath, "~") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to expand ~ in SSH_KEY_PATH: %w", err)
+		}
+		c.SSHKeyPath = strings.Replace(c.SSHKeyPath, "~", homeDir, 1)
 	}
 
 	// Don't expand ~ in RemoteBaseDir - let the remote shell handle it

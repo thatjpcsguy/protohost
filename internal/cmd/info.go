@@ -71,7 +71,7 @@ func infoLocal(projectName string) error {
 }
 
 func infoRemote(cfg *config.Config, projectName string) error {
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
