@@ -102,7 +102,7 @@ Please install protohost on the remote server first:
 
 	fmt.Println()
 	fmt.Println("✅ Remote deployment complete!")
-	fmt.Printf("🌐 URL: https://%s.%s\n", projectName, cfg.RemoteHost)
+	fmt.Printf("🌐 URL: https://%s.protohost.xyz\n", projectName)
 	fmt.Println()
 
 	// Execute post-deploy hook locally

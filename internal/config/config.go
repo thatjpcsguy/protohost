@@ -149,13 +149,8 @@ func (c *Config) expandVariables() error {
 	// Don't expand ~ in RemoteBaseDir - let the remote shell handle it
 	// This allows ~/protohost to work correctly on remote servers
 
-	// Set default SSL paths if not specified
-	if c.SSLCertPath == "" {
-		c.SSLCertPath = fmt.Sprintf("/etc/letsencrypt/live/%s/fullchain.pem", c.RemoteHost)
-	}
-	if c.SSLKeyPath == "" {
-		c.SSLKeyPath = fmt.Sprintf("/etc/letsencrypt/live/%s/privkey.pem", c.RemoteHost)
-	}
+	// Don't set default SSL paths here - let nginx.go handle defaults
+	// This allows nginx to use the correct public domain (protohost.xyz)
 
 	return nil
 }

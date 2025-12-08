@@ -151,7 +151,7 @@ func Local(opts LocalOptions) error {
 			fmt.Printf("Warning: nginx configuration failed: %v\n", err)
 			fmt.Println("   Deployment is running but not accessible via nginx")
 		} else {
-			fmt.Printf("✅ Nginx configured: https://%s.%s\n", projectName, cfg.RemoteHost)
+			fmt.Printf("✅ Nginx configured: https://%s.protohost.xyz\n", projectName)
 		}
 	}
 

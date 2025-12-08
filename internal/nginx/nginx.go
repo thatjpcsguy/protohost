@@ -10,7 +10,11 @@ import (
 
 // GenerateConfig generates an nginx configuration for a deployment
 func GenerateConfig(cfg *config.Config, projectName string, port int) string {
-	serverName := fmt.Sprintf("%s.%s", projectName, cfg.RemoteHost)
+	// Always use protohost.xyz as the public domain
+	publicDomain := "protohost.xyz"
+	serverName := fmt.Sprintf("%s.%s", projectName, publicDomain)
+
+	// Use internal IP for proxy pass
 	proxyPass := fmt.Sprintf("http://%s:%d", cfg.NginxProxyHost, port)
 
 	sslCert := ""
@@ -20,9 +24,9 @@ func GenerateConfig(cfg *config.Config, projectName string, port int) string {
 		sslCert = cfg.SSLCertPath
 		sslKey = cfg.SSLKeyPath
 	} else {
-		// Default Let's Encrypt paths
-		sslCert = fmt.Sprintf("/etc/letsencrypt/live/%s/fullchain.pem", cfg.RemoteHost)
-		sslKey = fmt.Sprintf("/etc/letsencrypt/live/%s/privkey.pem", cfg.RemoteHost)
+		// Default Let's Encrypt paths using public domain
+		sslCert = fmt.Sprintf("/etc/letsencrypt/live/%s/fullchain.pem", publicDomain)
+		sslKey = fmt.Sprintf("/etc/letsencrypt/live/%s/privkey.pem", publicDomain)
 	}
 
 	config := fmt.Sprintf(`server {
