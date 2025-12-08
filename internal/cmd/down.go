@@ -8,6 +8,7 @@ import (
 	"github.com/thatjpcsguy/protohost/internal/config"
 	"github.com/thatjpcsguy/protohost/internal/docker"
 	"github.com/thatjpcsguy/protohost/internal/git"
+	"github.com/thatjpcsguy/protohost/internal/nginx"
 	"github.com/thatjpcsguy/protohost/internal/registry"
 	"github.com/thatjpcsguy/protohost/internal/ssh"
 )
@@ -74,6 +75,20 @@ func downLocal(projectName string, removeVolumes bool) error {
 		deployDir = fmt.Sprintf("%s/.protohost/deployments/%s", home, projectName)
 	}
 
+	// Load config for nginx removal
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Printf("Warning: failed to load config: %v\n", err)
+	}
+
+	// Remove nginx configuration
+	if cfg != nil && cfg.NginxServer != "" {
+		fmt.Println("🌐 Removing nginx configuration...")
+		if err := nginx.Remove(cfg, projectName); err != nil {
+			fmt.Printf("Warning: failed to remove nginx config: %v\n", err)
+		}
+	}
+
 	// Stop containers
 	if err := docker.Down(projectName, deployDir, removeVolumes); err != nil {
 		return err
@@ -85,8 +100,16 @@ func downLocal(projectName string, removeVolumes bool) error {
 		fmt.Printf("Warning: failed to update registry: %v\n", err)
 	} else {
 		defer func() { _ = reg.Close() }()
-		if err := reg.UpdateStatus(projectName, "stopped"); err != nil {
-			fmt.Printf("Warning: failed to update status: %v\n", err)
+		if removeVolumes {
+			// If volumes are removed, delete the registry entry so next deploy runs first-install
+			if err := reg.ReleasePort(projectName); err != nil {
+				fmt.Printf("Warning: failed to release port: %v\n", err)
+			}
+		} else {
+			// Otherwise just mark as stopped
+			if err := reg.UpdateStatus(projectName, "stopped"); err != nil {
+				fmt.Printf("Warning: failed to update status: %v\n", err)
+			}
 		}
 	}
 
