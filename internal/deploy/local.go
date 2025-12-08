@@ -9,6 +9,7 @@ import (
 	"github.com/thatjpcsguy/protohost/internal/docker"
 	"github.com/thatjpcsguy/protohost/internal/git"
 	"github.com/thatjpcsguy/protohost/internal/hooks"
+	"github.com/thatjpcsguy/protohost/internal/nginx"
 	"github.com/thatjpcsguy/protohost/internal/registry"
 )
 
@@ -139,6 +140,18 @@ func Local(opts LocalOptions) error {
 	if isNew {
 		if err := hooks.Execute(hooks.FirstInstall, cfg.FirstInstallScript, hookEnv); err != nil {
 			fmt.Printf("Warning: first-install hook failed: %v\n", err)
+		}
+	}
+
+	// Deploy nginx configuration
+	if cfg.NginxServer != "" {
+		fmt.Println("🌐 Configuring nginx...")
+		nginxConfig := nginx.GenerateConfig(cfg, projectName, port)
+		if err := nginx.Deploy(cfg, projectName, nginxConfig); err != nil {
+			fmt.Printf("Warning: nginx configuration failed: %v\n", err)
+			fmt.Println("   Deployment is running but not accessible via nginx")
+		} else {
+			fmt.Printf("✅ Nginx configured: https://%s.%s\n", projectName, cfg.RemoteHost)
 		}
 	}
 
