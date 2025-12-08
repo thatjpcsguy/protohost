@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -147,14 +146,8 @@ func (c *Config) expandVariables() error {
 		c.RemoteUser = os.Getenv("USER")
 	}
 
-	// Expand ~ in RemoteBaseDir
-	if strings.HasPrefix(c.RemoteBaseDir, "~") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-		c.RemoteBaseDir = filepath.Join(home, c.RemoteBaseDir[1:])
-	}
+	// Don't expand ~ in RemoteBaseDir - let the remote shell handle it
+	// This allows ~/protohost to work correctly on remote servers
 
 	// Set default SSL paths if not specified
 	if c.SSLCertPath == "" {
