@@ -2,8 +2,8 @@
 # Copy this file to .protohost.config and customize for your project
 
 # Remote server configuration
-REMOTE_HOST="protohost.xyz"              # SSH hostname for deployment target
-REMOTE_USER="${USER}"                     # SSH username (defaults to current user)
+REMOTE_HOST="remote.protohost.xyz"              # SSH hostname for deployment target
+REMOTE_USER="james"                     # SSH username (defaults to current user)
 REMOTE_BASE_DIR="~/protohost"             # Base directory for all deployments
 
 # Network configuration
