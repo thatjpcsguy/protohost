@@ -132,7 +132,8 @@ func downRemote(cfg *config.Config, projectName string, removeVolumes bool) erro
 		volumeFlag = "-v"
 	}
 
-	cmd := fmt.Sprintf("cd %s/%s && protohost down %s",
+	// Use --local to avoid recursive remote execution
+	cmd := fmt.Sprintf("cd %s/%s && protohost down --local %s",
 		cfg.RemoteBaseDir, projectName, volumeFlag)
 
 	return client.ExecuteInteractive(cmd)

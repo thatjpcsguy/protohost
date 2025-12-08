@@ -77,6 +77,7 @@ func infoRemote(cfg *config.Config, projectName string) error {
 	}
 	defer func() { _ = client.Close() }()
 
-	cmd := fmt.Sprintf("cd %s/%s && protohost info", cfg.RemoteBaseDir, projectName)
+	// Use --local to avoid recursive remote execution
+	cmd := fmt.Sprintf("cd %s/%s && protohost info --local", cfg.RemoteBaseDir, projectName)
 	return client.ExecuteInteractive(cmd)
 }

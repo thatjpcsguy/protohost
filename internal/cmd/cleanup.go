@@ -130,6 +130,7 @@ func cleanupRemote(dryRun bool) error {
 		dryRunFlag = "--dry-run"
 	}
 
-	cmd := fmt.Sprintf("cd %s && protohost cleanup %s", cfg.RemoteBaseDir, dryRunFlag)
+	// Use --local to avoid recursive remote execution
+	cmd := fmt.Sprintf("cd %s && protohost cleanup --local %s", cfg.RemoteBaseDir, dryRunFlag)
 	return client.ExecuteInteractive(cmd)
 }

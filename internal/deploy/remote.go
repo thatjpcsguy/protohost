@@ -139,8 +139,8 @@ func buildRemoteDeployScript(cfg *config.Config, projectName, branch string, opt
 	// Change to project directory
 	script.WriteString(fmt.Sprintf("cd %s/%s\n\n", cfg.RemoteBaseDir, projectName))
 
-	// Build protohost deploy command
-	deployCmd := "protohost deploy"
+	// Build protohost deploy command (use --local to avoid recursive remote execution)
+	deployCmd := "protohost deploy --local"
 	if opts.Clean {
 		deployCmd += " --clean"
 	}
@@ -148,7 +148,7 @@ func buildRemoteDeployScript(cfg *config.Config, projectName, branch string, opt
 		deployCmd += " --build"
 	}
 
-	script.WriteString("# Run protohost deploy\n")
+	script.WriteString("# Run protohost deploy locally on remote server\n")
 	script.WriteString(fmt.Sprintf("%s\n", deployCmd))
 
 	return script.String()

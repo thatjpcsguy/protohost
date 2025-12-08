@@ -107,8 +107,8 @@ func listRemote() error {
 	}
 	defer func() { _ = client.Close() }()
 
-	// Run protohost list on remote
-	if err := client.ExecuteInteractive("cd " + cfg.RemoteBaseDir + " && protohost list"); err != nil {
+	// Run protohost list on remote (with --local to avoid recursive remote execution)
+	if err := client.ExecuteInteractive("cd " + cfg.RemoteBaseDir + " && protohost list --local"); err != nil {
 		return fmt.Errorf("failed to list remote deployments: %w", err)
 	}
 
