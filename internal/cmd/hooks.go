@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/thatjpcsguy/protohost/internal/config"
@@ -137,6 +136,7 @@ func runHookRemote(cfg *config.Config, hookType hooks.HookType, projectName stri
 
 	// Build remote command to run the hook
 	// The hook will be executed in the context of the deployment directory
+	// IMPORTANT: Use --local flag so the remote server runs the hook locally, not recursively remote
 	script := fmt.Sprintf(`
 set -e
 cd %s/%s
@@ -147,8 +147,8 @@ if ! command -v protohost &> /dev/null; then
     exit 1
 fi
 
-# Run the hook locally on the remote server
-protohost hooks %s
+# Run the hook locally on the remote server (not recursively remote)
+protohost hooks %s --local
 `, cfg.RemoteBaseDir, projectName, hookType)
 
 	if err := client.ExecuteInteractive(script); err != nil {
@@ -157,10 +157,4 @@ protohost hooks %s
 
 	fmt.Println("✅ Remote hook completed successfully!")
 	return nil
-}
-
-// fileExists checks if a file exists
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }
