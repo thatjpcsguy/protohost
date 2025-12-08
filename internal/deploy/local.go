@@ -58,8 +58,8 @@ func Local(opts LocalOptions) error {
 	}
 	defer func() { _ = reg.Close() }()
 
-	// Allocate port
-	port, err := reg.AllocatePort(projectName, branch, cfg.RepoURL, cfg.TTLDays, cfg.BaseWebPort)
+	// Allocate port and determine if this is a new deployment
+	port, isNew, err := reg.AllocatePort(projectName, branch, cfg.RepoURL, cfg.TTLDays, cfg.BaseWebPort)
 	if err != nil {
 		return fmt.Errorf("failed to allocate port: %w", err)
 	}
@@ -69,7 +69,6 @@ func Local(opts LocalOptions) error {
 
 	// For local deployment, use current directory if in a git repo
 	var deployDir string
-	var isNew bool
 
 	if git.IsGitRepo() {
 		// Use current directory
@@ -78,7 +77,6 @@ func Local(opts LocalOptions) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 		deployDir = cwd
-		isNew = false
 		fmt.Println("📂 Using current directory for deployment")
 	} else {
 		// Not in a git repo, clone to deployment directory
@@ -90,7 +88,7 @@ func Local(opts LocalOptions) error {
 		deployDir = filepath.Join(home, ".protohost", "deployments", projectName)
 
 		// Clone or pull repository
-		isNew, err = git.CloneOrPull(cfg.RepoURL, branch, deployDir)
+		_, err = git.CloneOrPull(cfg.RepoURL, branch, deployDir)
 		if err != nil {
 			return fmt.Errorf("failed to update repository: %w", err)
 		}
@@ -132,7 +130,7 @@ func Local(opts LocalOptions) error {
 	}
 
 	// Execute first-install hook if this is a new deployment
-	if isNew && cfg.FirstInstallScript != "" {
+	if isNew {
 		if err := hooks.Execute(hooks.FirstInstall, cfg.FirstInstallScript, hookEnv); err != nil {
 			fmt.Printf("Warning: first-install hook failed: %v\n", err)
 		}

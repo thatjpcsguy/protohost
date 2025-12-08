@@ -80,7 +80,8 @@ func (r *Registry) initSchema() error {
 }
 
 // AllocatePort allocates a port for a project, or returns existing allocation
-func (r *Registry) AllocatePort(projectName, branch, repoURL string, ttlDays, basePort int) (int, error) {
+// Returns (port, isNew, error) where isNew indicates if this is a new deployment
+func (r *Registry) AllocatePort(projectName, branch, repoURL string, ttlDays, basePort int) (int, bool, error) {
 	// Check if project already has a port
 	var existingPort int
 	err := r.db.QueryRow(
@@ -96,19 +97,19 @@ func (r *Registry) AllocatePort(projectName, branch, repoURL string, ttlDays, ba
 			expiresAt, projectName,
 		)
 		if err != nil {
-			return 0, fmt.Errorf("failed to update expiration: %w", err)
+			return 0, false, fmt.Errorf("failed to update expiration: %w", err)
 		}
-		return existingPort, nil
+		return existingPort, false, nil
 	}
 
 	if err != sql.ErrNoRows {
-		return 0, fmt.Errorf("failed to check existing port: %w", err)
+		return 0, false, fmt.Errorf("failed to check existing port: %w", err)
 	}
 
 	// Find next available port
 	port, err := r.findAvailablePort(basePort)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 
 	// Insert new allocation
@@ -121,10 +122,10 @@ func (r *Registry) AllocatePort(projectName, branch, repoURL string, ttlDays, ba
 	`, projectName, port, branch, createdAt, expiresAt, repoURL)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert allocation: %w", err)
+		return 0, false, fmt.Errorf("failed to insert allocation: %w", err)
 	}
 
-	return port, nil
+	return port, true, nil
 }
 
 // findAvailablePort finds the first available port starting from basePort
