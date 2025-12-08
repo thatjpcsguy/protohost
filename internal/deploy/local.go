@@ -66,6 +66,9 @@ func Local(opts LocalOptions) error {
 
 	fmt.Printf("📍 Allocated port: %d\n", port)
 	hookEnv["WEB_PORT"] = fmt.Sprintf("%d", port)
+	hookEnv["NGINX_PROXY_HOST"] = cfg.NginxProxyHost
+	hookEnv["NGINX_SERVER"] = cfg.NginxServer
+	hookEnv["REMOTE_HOST"] = cfg.RemoteHost
 
 	// For local deployment, use current directory if in a git repo
 	var deployDir string
@@ -113,6 +116,9 @@ func Local(opts LocalOptions) error {
 	env := map[string]string{
 		"WEB_PORT":              fmt.Sprintf("%d", port),
 		"COMPOSE_PROJECT_NAME":  projectName,
+		"NGINX_PROXY_HOST":      cfg.NginxProxyHost,
+		"NGINX_SERVER":          cfg.NginxServer,
+		"REMOTE_HOST":           cfg.RemoteHost,
 	}
 
 	if err := docker.Up(projectName, deployDir, env); err != nil {
