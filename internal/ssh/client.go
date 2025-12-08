@@ -7,9 +7,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
+	"golang.org/x/term"
 )
 
 // Client represents an SSH client
@@ -40,7 +42,26 @@ func NewClient(user, host string) (*Client, error) {
 	// Parse private key
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key: %w", err)
+		// Check if the error is due to passphrase protection
+		if strings.Contains(err.Error(), "passphrase") ||
+		   strings.Contains(err.Error(), "encrypted") ||
+		   strings.Contains(err.Error(), "cannot decode") {
+			// Prompt for passphrase
+			fmt.Printf("Enter passphrase for %s: ", keyPath)
+			passphrase, passphraseErr := term.ReadPassword(int(syscall.Stdin))
+			fmt.Println() // Add newline after password input
+			if passphraseErr != nil {
+				return nil, fmt.Errorf("failed to read passphrase: %w", passphraseErr)
+			}
+
+			// Try parsing with passphrase
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, passphrase)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse private key with passphrase: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to parse private key: %w", err)
+		}
 	}
 
 	// Load known_hosts
