@@ -128,7 +128,7 @@ func runHookRemote(cfg *config.Config, hookType hooks.HookType, projectName stri
 	fmt.Printf("🪝 Running %s hook on remote server %s...\n", hookType, cfg.RemoteHost)
 
 	// Connect to remote
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath, cfg.RemoteJumpUser, cfg.RemoteJumpHost)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}

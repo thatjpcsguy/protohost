@@ -16,13 +16,14 @@ import (
 
 // Client represents an SSH client
 type Client struct {
-	Host   string
-	User   string
-	client *ssh.Client
+	Host       string
+	User       string
+	client     *ssh.Client
+	jumpClient *ssh.Client // Optional jump host client
 }
 
 // NewClient creates a new SSH client
-func NewClient(user, host, configKeyPath string) (*Client, error) {
+func NewClient(user, host, configKeyPath string, jumpUser, jumpHost string) (*Client, error) {
 	// Get SSH key path
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -93,25 +94,69 @@ func NewClient(user, host, configKeyPath string) (*Client, error) {
 		HostKeyCallback: hostKeyCallback,
 	}
 
-	// Connect
-	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:22", host), config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to %s@%s: %w", user, host, err)
+	var client *ssh.Client
+	var jumpClient *ssh.Client
+
+	// If jump host is specified, connect through it
+	if jumpHost != "" {
+		// Connect to jump host first
+		jumpConfig := &ssh.ClientConfig{
+			User: jumpUser,
+			Auth: []ssh.AuthMethod{
+				ssh.PublicKeys(signer),
+			},
+			HostKeyCallback: hostKeyCallback,
+		}
+
+		jumpClient, err = ssh.Dial("tcp", fmt.Sprintf("%s:22", jumpHost), jumpConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to jump host %s@%s: %w", jumpUser, jumpHost, err)
+		}
+
+		// Connect to target host through jump host
+		conn, err := jumpClient.Dial("tcp", fmt.Sprintf("%s:22", host))
+		if err != nil {
+			_ = jumpClient.Close()
+			return nil, fmt.Errorf("failed to dial %s through jump host: %w", host, err)
+		}
+
+		// Create SSH connection over the jump host connection
+		ncc, chans, reqs, err := ssh.NewClientConn(conn, fmt.Sprintf("%s:22", host), config)
+		if err != nil {
+			_ = conn.Close()
+			_ = jumpClient.Close()
+			return nil, fmt.Errorf("failed to create SSH connection through jump host: %w", err)
+		}
+
+		client = ssh.NewClient(ncc, chans, reqs)
+	} else {
+		// Direct connection (no jump host)
+		client, err = ssh.Dial("tcp", fmt.Sprintf("%s:22", host), config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to %s@%s: %w", user, host, err)
+		}
 	}
 
 	return &Client{
-		Host:   host,
-		User:   user,
-		client: client,
+		Host:       host,
+		User:       user,
+		client:     client,
+		jumpClient: jumpClient,
 	}, nil
 }
 
 // Close closes the SSH connection
 func (c *Client) Close() error {
+	var err error
 	if c.client != nil {
-		return c.client.Close()
+		err = c.client.Close()
 	}
-	return nil
+	if c.jumpClient != nil {
+		if jumpErr := c.jumpClient.Close(); jumpErr != nil && err == nil {
+			err = jumpErr
+		}
+	}
+	return err
 }
 
 // Execute runs a command and returns the output

@@ -133,6 +133,8 @@ TTL_DAYS=7
 REMOTE_HOST="protohost.xyz"
 REMOTE_USER="james"
 REMOTE_BASE_DIR="~/protohost"
+REMOTE_JUMP_HOST="bastion.example.com"  # Optional: Jump host (bastion) for SSH
+REMOTE_JUMP_USER="james"                # Optional: Jump host user (defaults to REMOTE_USER)
 NGINX_PROXY_HOST="10.10.20.4"  # IP where Docker containers run
 NGINX_SERVER="10.10.20.10"      # IP where nginx runs
 BASE_WEB_PORT=3000
@@ -145,17 +147,19 @@ REMOTE_HOST="staging.example.com"  # Override for testing
 
 ### Important Implementation Details
 
-1. **SSH Key Passphrase Support**: The SSH client detects encrypted keys and prompts for passphrases using `golang.org/x/term` for secure input.
+1. **SSH Jump Host Support**: The SSH client supports connecting through a jump host (bastion) using the `REMOTE_JUMP_HOST` and `REMOTE_JUMP_USER` configuration options. This is equivalent to `ssh -J` functionality.
 
-2. **TTL and Cleanup**: Deployments have a TTL (default 7 days). The `cleanup` command marks expired deployments and can remove them (stops containers, deletes files, removes nginx config).
+2. **SSH Key Passphrase Support**: The SSH client detects encrypted keys and prompts for passphrases using `golang.org/x/term` for secure input.
 
-3. **First Install Detection**: Registry returns `isNew` boolean from `AllocatePort()` to detect first deployment of a branch (used to trigger `first-install` hook).
+3. **TTL and Cleanup**: Deployments have a TTL (default 7 days). The `cleanup` command marks expired deployments and can remove them (stops containers, deletes files, removes nginx config).
 
-4. **Nginx Configuration**: Nginx can run on a different server than Docker. Config uses `NGINX_PROXY_HOST` for proxy_pass target and gets deployed to `NGINX_SERVER`.
+4. **First Install Detection**: Registry returns `isNew` boolean from `AllocatePort()` to detect first deployment of a branch (used to trigger `first-install` hook).
 
-5. **Docker Project Isolation**: Uses `-p {PROJECT_NAME}` flag with docker compose to isolate containers, networks, and volumes per branch.
+5. **Nginx Configuration**: Nginx can run on a different server than Docker. Config uses `NGINX_PROXY_HOST` for proxy_pass target and gets deployed to `NGINX_SERVER`.
 
-6. **Port Range**: Supports 100 deployments by default (BASE_WEB_PORT to BASE_WEB_PORT+99). Only web ports are allocated; other services (MySQL, Redis) run on Docker internal networks.
+6. **Docker Project Isolation**: Uses `-p {PROJECT_NAME}` flag with docker compose to isolate containers, networks, and volumes per branch.
+
+7. **Port Range**: Supports 100 deployments by default (BASE_WEB_PORT to BASE_WEB_PORT+99). Only web ports are allocated; other services (MySQL, Redis) run on Docker internal networks.
 
 ## Testing
 

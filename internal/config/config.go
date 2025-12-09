@@ -20,6 +20,8 @@ type Config struct {
 	RemoteHost     string
 	RemoteUser     string
 	RemoteBaseDir  string
+	RemoteJumpHost string // Optional jump host (bastion)
+	RemoteJumpUser string // Optional jump host user (defaults to RemoteUser)
 	NginxProxyHost string
 	NginxServer    string
 
@@ -128,6 +130,10 @@ func loadConfigFile(filename string, cfg *Config) error {
 			cfg.RemoteUser = value
 		case "REMOTE_BASE_DIR":
 			cfg.RemoteBaseDir = value
+		case "REMOTE_JUMP_HOST":
+			cfg.RemoteJumpHost = value
+		case "REMOTE_JUMP_USER":
+			cfg.RemoteJumpUser = value
 		case "NGINX_PROXY_HOST":
 			cfg.NginxProxyHost = value
 		case "NGINX_SERVER":
@@ -161,6 +167,11 @@ func (c *Config) expandVariables() error {
 	// Expand ${USER} in RemoteUser
 	if c.RemoteUser == "${USER}" || c.RemoteUser == "$USER" {
 		c.RemoteUser = os.Getenv("USER")
+	}
+
+	// Default RemoteJumpUser to RemoteUser if not specified
+	if c.RemoteJumpHost != "" && c.RemoteJumpUser == "" {
+		c.RemoteJumpUser = c.RemoteUser
 	}
 
 	// Expand ~ in SSHKeyPath (local path)

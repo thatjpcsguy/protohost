@@ -61,7 +61,7 @@ func Deploy(cfg *config.Config, projectName string, configContent string) error 
 		return fmt.Errorf("NGINX_SERVER not configured")
 	}
 
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.NginxServer, cfg.SSHKeyPath)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.NginxServer, cfg.SSHKeyPath, cfg.RemoteJumpUser, cfg.RemoteJumpHost)
 	if err != nil {
 		return fmt.Errorf("failed to connect to nginx server: %w", err)
 	}
@@ -93,7 +93,7 @@ func Remove(cfg *config.Config, projectName string) error {
 		return nil
 	}
 
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.NginxServer, cfg.SSHKeyPath)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.NginxServer, cfg.SSHKeyPath, cfg.RemoteJumpUser, cfg.RemoteJumpHost)
 	if err != nil {
 		return fmt.Errorf("failed to connect to nginx server: %w", err)
 	}

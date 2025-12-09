@@ -100,8 +100,11 @@ func listRemote() error {
 	}
 
 	fmt.Printf("Connecting to %s@%s...\n", cfg.RemoteUser, cfg.RemoteHost)
+	if cfg.RemoteJumpHost != "" {
+		fmt.Printf("   via jump host %s@%s\n", cfg.RemoteJumpUser, cfg.RemoteJumpHost)
+	}
 
-	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath)
+	client, err := ssh.NewClient(cfg.RemoteUser, cfg.RemoteHost, cfg.SSHKeyPath, cfg.RemoteJumpUser, cfg.RemoteJumpHost)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
