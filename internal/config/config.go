@@ -41,6 +41,9 @@ type Config struct {
 	PostDeployScript   string
 	PostStartScript    string
 	FirstInstallScript string
+
+	// Custom environment variables passed to Docker Compose
+	ComposeEnv map[string]string
 }
 
 // Load reads and parses the .protohost.config file
@@ -50,6 +53,7 @@ func Load() (*Config, error) {
 		TTLDays:       7,
 		BaseWebPort:   3000,
 		SSLParamsFile: "ssl-params.conf",
+		ComposeEnv:    make(map[string]string),
 	}
 
 	// Load global config first (lowest priority)
@@ -115,6 +119,15 @@ func loadConfigFile(filename string, cfg *Config) error {
 
 		key := matches[1]
 		value := strings.Trim(matches[2], `"'`)
+
+		// ENV_* keys are passed through to Docker Compose
+		if strings.HasPrefix(key, "ENV_") {
+			envKey := strings.TrimPrefix(key, "ENV_")
+			if envKey != "" {
+				cfg.ComposeEnv[envKey] = value
+			}
+			continue
+		}
 
 		// Set config values
 		switch key {

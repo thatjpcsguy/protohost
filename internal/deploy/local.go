@@ -122,6 +122,11 @@ func Local(opts LocalOptions) error {
 		"REMOTE_HOST":           cfg.RemoteHost,
 	}
 
+	// Merge custom compose environment variables (ENV_* from config)
+	for k, v := range cfg.ComposeEnv {
+		env[k] = v
+	}
+
 	if err := docker.Up(projectName, deployDir, env); err != nil {
 		return err
 	}
